@@ -14,7 +14,7 @@ The file is safe for downloading.
 Source code is available in this repository.
 
 ### 4. Make sure the pictures are in a separate folder and the path does not include any special characters and spaces
-The program can't currently handle a path that with them. (fixing probably in the future)
+The program can't currently handle a path with them. (fixing probably in the future)
 
 ## How to run:
 
