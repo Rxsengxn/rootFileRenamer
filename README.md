@@ -21,7 +21,7 @@ The program can't currently handle a path with them. (fixing probably in the fut
 ### Run the script %%.exe :)
 Controls should be pretty self explanatory:
 - Firstly it asks the user for the folder location where the pictures are located
-- "y" or "n" while the picture window is focused
+- "y" or "n" while the picture window is focused/active
 - enter the correct symbol combination into the input box field when the program can't find anything or has detected it wrongly
 (can be lowercase, it converts it to uppercase; enter with Enter key :))
 > **_NOTE📝:_**  The program overwrites the existing file if it has the same name
