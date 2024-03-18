@@ -16,7 +16,9 @@ Source code is available in this repository.
 ### 4. Make sure the pictures are in a separate folder and the path does not include any special characters and spaces
 The program can't currently handle a path that with them. (fixing probably in the future)
 
-### 4. Run the script :)
+## How to run:
+
+### Run the script %%.exe :)
 Controls should be pretty self explanatory:
 - Firstly it asks the user for the folder location where the pictures are located
 - "y" or "n" while the picture window is focused
