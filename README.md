@@ -12,4 +12,4 @@ Click next on all of the prompts
 [link to the file](https://drive.google.com/file/d/1Bng2jYmbb5rFycDoCGr7fWBjbaGMldYA/view?usp=sharing)
 The file is safe for downloading. Source code is available in this repository.
 
-### 3. Run the script :)
+### 4. Run the script :)
