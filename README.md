@@ -8,8 +8,9 @@ Can be downloaded from this link: [download tesseract](https://digi.bib.uni-mann
 ### 2. Run tesseract setup
 Click next on all of the prompts
 
-### 3. Download the .exe file from ~~this repository~~drive
-[link to the file](https://drive.google.com/file/d/1Bng2jYmbb5rFycDoCGr7fWBjbaGMldYA/view?usp=sharing)
+### 3. Download the .exe file from **this repository**
+[rootFileRenamer download](https://github.com/Rxsengxn/rootFileRenamer/blob/kert_development/rootFileRenamer.exe)
+~~[link to the file](https://drive.google.com/file/d/1Bng2jYmbb5rFycDoCGr7fWBjbaGMldYA/view?usp=sharing)~~
 The file is safe for downloading.
 Source code is available in this repository.
 
