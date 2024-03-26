@@ -87,8 +87,14 @@ def viie_katse_parim(frame):
     print(f"tulemus: {mfr}")
 
     cv2.namedWindow('Input', cv2.WINDOW_NORMAL)
-    cv2.putText(input_img, str(mfr), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,  
-                   2, (0, 255, 0), 4, cv2.LINE_AA)
+    cv2.putText(input_img,
+                str(mfr),
+                (len(input_img[0])-10, 80),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (0, 255, 0),
+                4,
+                cv2.LINE_AA)
     cv2.imshow("Input", input_img)
     
     print("y - õige, n - vale")
@@ -203,8 +209,14 @@ def katse(list_failidest):
             
             ### path +
             new_filename = fileparts2[0] + "_" + str(number).strip() + "." + fileparts[1]
-            
-            shutil.copy(file, join(path,"output",new_filename))
+            new_path = join(path,"output",new_filename)
+
+            ### If the file exists already, add X before the name of the file to not 
+            # overwrite the correct file in case of wrong human input
+            if os.path.isfile(new_path):
+                new_path = "X" + new_path
+
+            shutil.copy(file, new_path)
 
             print(f"failinimi {counter}: {new_filename}")
     
