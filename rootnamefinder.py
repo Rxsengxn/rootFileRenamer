@@ -12,7 +12,7 @@ import sys
 from os import listdir, mkdir, name
 from os.path import isfile, join, exists
 import shutil
-
+import re
 
 root = Tk()
 root.withdraw()
@@ -68,8 +68,11 @@ def kontroll(symbol):
             return symbol
     return None
 
+mfr = ""
+correct = ""
+
 def viie_katse_parim(frame):
-    global mfr, correct
+    global mfr, correct, go_back
     '''
     Searches a set of symbols from the input image.
     
@@ -89,7 +92,7 @@ def viie_katse_parim(frame):
     cv2.namedWindow('Input', cv2.WINDOW_NORMAL)
     cv2.putText(input_img,
                 str(mfr),
-                (len(input_img[0])-10, 80),
+                (len(input_img[0])//3, len(input_img)//10*7+10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 2,
                 (0, 255, 0),
@@ -97,18 +100,24 @@ def viie_katse_parim(frame):
                 cv2.LINE_AA)
     cv2.imshow("Input", input_img)
     
-    print("y - õige, n - vale")
+    print("(y)es/correct, (n)o/wrong, go (b)ack")
     while True:
         root.update()
         key = cv2.waitKey(1) & 0xFF
         if (key  == ord("y") and correct == ""):
             correct = True
             break
+        
         if ((key  == ord("n") or mfr is None) and correct == ""):
             correct = False
             root.lift()
             root.deiconify()
-            e.focus_set() 
+            e.focus_set()
+            
+        if (key == ord("b")):
+            go_back = True
+            break
+        
         if correct == True:
             break
     
@@ -142,8 +151,9 @@ def katse(list_failidest):
     global input_img
 
     cv2.namedWindow('Input', cv2.WINDOW_NORMAL)
-
-    for counter, juurepilt in enumerate(list_failidest):
+    
+        
+    for juurepilt in moveGenerator(list_failidest):
         if juurepilt.endswith('.jpg') or juurepilt.endswith('.png'):
             number = None
             file = join(path, juurepilt)
@@ -195,6 +205,9 @@ def katse(list_failidest):
                 messagebox.showerror("Error", "Sellelt pildilt ei suudetud tuvastada sinist ristkülikut.")
                 continue
 
+            if go_back:
+                continue
+
             if number == None:
                 print()
                 print("Sellelt pildilt ei suudetud sümboleid tuvastada.")
@@ -202,6 +215,8 @@ def katse(list_failidest):
                 print()
                 messagebox.showerror("Error", "Sellelt pildilt ei suudetud sümboleid tuvastada.")
                 continue
+
+            found_symbols(number)
 
             fileparts = juurepilt.split(".")
             
@@ -213,29 +228,105 @@ def katse(list_failidest):
 
             ### If the file exists already, add X before the name of the file to not 
             # overwrite the correct file in case of wrong human input
-            if os.path.isfile(new_path):
-                new_path = "X" + new_path
+            if isfile(new_path):
+                #print("EROOROROOROROO")
+                new_path = join(path,"output",("X" + new_filename))
+                #print(f"new_path: {new_path}")
+                messagebox.showerror("Error", "Selline fail on juba olemas. Failinime algusesse lisati 'X'")
 
             shutil.copy(file, new_path)
 
-            print(f"failinimi {counter}: {new_filename}")
+            print(f"failinimi {i}: new_filename: {new_filename} , path: {new_path}")
+            
+#failid = []
+i = 0
+go_back = False
+def moveGenerator(failid):
+    global i, go_back
+    #i = 0
+    while i < len(failid):
+        if go_back:
+            i -= 1
+            go_back = False
+        else:
+            i += 1
+        yield failid[i-1]
+        
+found = {}
+def found_symbols(new_symbol):
+    global run
     
+    if new_symbol == '' or new_symbol == None:
+        run = False
+        return
+
+    extracted = re.split(r'([0-9]+)([A-Z])', new_symbol)[1:-1]
+    #print(f"extracted {extracted}")
+    
+    key, value = extracted#re.split(r'([a-z])', new_symbol)
+    key = int(key)
+    
+    #print(f"extracted: key: {key}, value: {value}")
+    
+    if key in found:
+        if value not in found.get(key):
+            found[key].append(value)
+    
+    else:
+        found[key] = [value]
+        
+missing_numbers = []
+missing_letters = []
+
+def missing(found_dict:dict):
+    global missing_numbers, missing_letters
+    keys = list(found_dict.keys())
+    i = 1
+    while i <= max(keys):
+        
+        if i not in keys:
+            missing_numbers.append(i)
+        elif len(found_dict[i]) < 4:
+            #print(found_dict[i])
+            if "A" not in found_dict[i]:
+                missing_letters.append(str(i)+"A")
+            if "B" not in found_dict[i]:
+                missing_letters.append(str(i)+"B")
+            if "C" not in found_dict[i]:
+                missing_letters.append(str(i)+"C")
+            if "D" not in found_dict[i]:
+                missing_letters.append(str(i)+"D")
+        i += 1
+        
+    print(f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
+
+    messagebox.showerror("Error", f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
+
+    
+    
+### For running it on windows
 if name == "nt":
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-mfr = ""
-correct = ""
+
 
 def main():
     global path
-    path = askdirectory(title='Select Folder') # shows dialog box and return the path
+    
+    try:
+        path = askdirectory(title='Select Folder') # shows dialog box and return the path
 
-    newpath = join(path, "output")
-    if not exists(newpath):
-        mkdir(newpath)
+        newpath = join(path, "output")
+        if not exists(newpath):
+            mkdir(newpath)
 
-    list_failidest = tee_failideks()
-    print(katse(list_failidest))
+        list_failidest = tee_failideks()
+        print(katse(list_failidest))
+        missing(found)
+        #print(f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
+        #messagebox.showerror("Error", f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
+    except RuntimeError as e:
+        print(f"error: {e}")
     
 if __name__ == "__main__":
     main()
