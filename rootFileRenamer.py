@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+### From Kert K & Jako A
+
+#from datetime import datetime
 import cv2
 import pytesseract
 import numpy as np
-from tkinter import Tk, Entry, Button, messagebox 
+from tkinter import Tk, Entry, Button, messagebox, Frame, Label
 from tkinter.filedialog import askdirectory
 
 import sys
@@ -14,24 +17,87 @@ from os.path import isfile, join, exists
 import shutil
 import re
 
+
+def disable_event():
+   pass
+
+# Main window
 root = Tk()
 root.withdraw()
 
-e = Entry(root)
 
-e.pack()
+# Dialog box for asking about the output folder
+askUserWindow = Tk()
+askUserWindow.title("Choose an option")
+# Adjust size
+askUserWindow.geometry("400x150")
+ 
+# set minimum window size value
+askUserWindow.minsize(400, 150)
+
+askUserWindow.protocol("WM_DELETE_WINDOW", disable_event)
+
+askUserWindow.withdraw()
+
+labelForText = Label(askUserWindow,
+                    text='Use default ("output") folder for the output files?',
+                    font = ("Arial", 18),
+                    wraplength=350)
+labelForText.pack(pady=20)
+
+askFrame = Frame(askUserWindow)
+askFrame.pack(pady=10)
+
+choose = ""
+def Click_yes(event=None):
+    global different_output, choose
+    
+    different_output = True
+    choose = True
+    labelForText.config(text="Continue where you left off?")
+    
+    askUserWindow.withdraw()
+
+
+def Click_no(event=None):
+    global different_output, choose
+    
+    different_output = False
+    choose = True
+    labelForText.config(text="Continue where you left off?")
+
+    askUserWindow.withdraw()
+
+
+button_yes = Button(askFrame, text="Yes", command=Click_no)
+button_yes.pack(side="left", padx=(10, 100))
+
+button_no = Button(askFrame, text="No", command=Click_yes)
+button_no.pack(side="left", padx=(100, 10))
+
+
+
+root.protocol("WM_DELETE_WINDOW", disable_event)
+
+entryField = Entry(root)
+
+entryField.pack()
 
 def Click(event=None):
     global correct, mfr
-    mfr = e.get().upper()
-    print(mfr)
-    e.delete(0, 'end')
-    correct = True
+    mfr = entryField.get().upper()
+    #print(f"input: {mfr}")
+    entryField.delete(0, 'end')
+    if mfr == "": 
+        correct = ""
+    else: 
+        correct = True
+    
     root.withdraw()
 
 root.bind("<Return>", Click)
     
-button = Button(root, text="Sisesta õiged symbolid", command=Click)
+button = Button(root, text="Input correct symbols", command=Click)
 button.pack()
 
 def kontroll(symbol):
@@ -70,9 +136,10 @@ def kontroll(symbol):
 
 mfr = ""
 correct = ""
+skip = False
 
 def viie_katse_parim(frame):
-    global mfr, correct, go_back
+    global mfr, correct, go_back, skip
     '''
     Searches a set of symbols from the input image.
     
@@ -87,7 +154,7 @@ def viie_katse_parim(frame):
                                         config='--psm 10 --oem 3 -c tessedit_char_whitelist=0123456789ABCD').strip()
     mfr = kontroll(symbols)
     
-    print(f"tulemus: {mfr}")
+    print(f"Result: {mfr}")
 
     cv2.namedWindow('Input', cv2.WINDOW_NORMAL)
     cv2.putText(input_img,
@@ -100,7 +167,7 @@ def viie_katse_parim(frame):
                 cv2.LINE_AA)
     cv2.imshow("Input", input_img)
     
-    print("(y)es/correct, (n)o/wrong, go (b)ack")
+    print("(y)es/correct, (n)o/wrong, go (b)ack, (s)kip this picture")
     while True:
         root.update()
         key = cv2.waitKey(1) & 0xFF
@@ -112,7 +179,7 @@ def viie_katse_parim(frame):
             correct = False
             root.lift()
             root.deiconify()
-            e.focus_set()
+            entryField.focus_set()
             
         if (key == ord("b")):
             go_back = True
@@ -120,12 +187,18 @@ def viie_katse_parim(frame):
         
         if correct == True:
             break
+        
+        if (key == ord("s")):
+            skip = True
+            break
     
         try:
             if cv2.getWindowProperty('Input', cv2.WND_PROP_VISIBLE) <= 0:
-                sys.exit()
-        except cv2.error:
-            sys.exit()
+                quit_program()
+        except cv2.error as e:
+            messagebox.showerror("error", f"error: {e}")
+            quit_program()
+            #sys.exit()
 
     cv2.destroyAllWindows()
     correct = ""
@@ -135,26 +208,25 @@ def viie_katse_parim(frame):
         
     return mfr
 
-def write_name_manually():
-    global mfr, correct
-    mfr = input("Sisesta käsitsi: ")
-    correct = True
-    return
-
 
 def tee_failideks():
-    onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+    onlyfiles = [f for f in listdir(path) if (isfile(join(path, f)) and (f.endswith('.jpg') or f.endswith('.png')))]
     print(onlyfiles)
     return onlyfiles
 
-def katse(list_failidest):
-    global input_img
+def katse(list_failidest, progress:list):
+    global input_img, skip
 
     cv2.namedWindow('Input', cv2.WINDOW_NORMAL)
     
         
     for juurepilt in moveGenerator(list_failidest):
         if juurepilt.endswith('.jpg') or juurepilt.endswith('.png'):
+            if len(progress) > 0:
+                if juurepilt in progress:
+                    progress.remove(juurepilt)
+                    continue
+            
             number = None
             file = join(path, juurepilt)
             
@@ -199,21 +271,21 @@ def katse(list_failidest):
                 cv2.imshow("Input", input_img)
                 cv2.waitKey(1000)
                 print()
-                print("Sellelt pildilt ei suudetud tuvastada sinist ristkülikut.")
+                print("Couldn't find blue rectangle from this picture.")
                 print(file)
                 print()
-                messagebox.showerror("Error", "Sellelt pildilt ei suudetud tuvastada sinist ristkülikut.")
+                messagebox.showerror("Error", "Couldn't find blue rectangle from this picture.")
                 continue
 
-            if go_back:
+            if go_back or skip:
                 continue
 
             if number == None:
                 print()
-                print("Sellelt pildilt ei suudetud sümboleid tuvastada.")
+                print("Couldn't find symbols from this picture.")
                 print(file)
                 print()
-                messagebox.showerror("Error", "Sellelt pildilt ei suudetud sümboleid tuvastada.")
+                messagebox.showerror("Error", "Couldn't find symbols from this picture.")
                 continue
 
             found_symbols(number)
@@ -232,20 +304,57 @@ def katse(list_failidest):
                 #print("EROOROROOROROO")
                 new_path = join(path,"output",("X" + new_filename))
                 #print(f"new_path: {new_path}")
-                messagebox.showerror("Error", "Selline fail on juba olemas. Failinime algusesse lisati 'X'")
+                messagebox.showerror("Error", "File already exists. Added 'X' to the start of the file name.")
 
             shutil.copy(file, new_path)
+            
+            ### Write to a log file
+            
+            
+            ### Write the processed file to a progress file
+            write_progress(juurepilt, path)
 
             print(f"failinimi {i}: new_filename: {new_filename} , path: {new_path}")
-            
-#failid = []
+
+
+# progress save idea
+# if first loading up, checks if the directory has a file named ".progress.txt":
+# if no, then its going to continue and its gonna make it.
+# If yes, then it will ask the user if it wants to use it.
+ 
+# If the user chooses to not use it, the program will continue as it would with
+# no progress file and add to the current one or make a new file with new information.
+# If the user chooses to use the savefile the programm will skip every file that is in
+# the file and continue where the user left off previously.
+
+# The information that it saves: only the original filenames of the pictures, which have been "renamed"/copied.
+def write_progress(info, path):
+    try:
+        with open(join(path, ".progress.txt"), "a+", encoding="UTF-8") as outputfile:
+            outputfile.write(info+"\n")
+    except Exception as e:
+        print("Unexpected error:", sys.exc_info()[0])
+        messagebox.showerror("error", f"Unexpected error:, {sys.exc_info()[0]}\n{e}")
+        quit_program()
+        
+def read_progress(path):
+    try:
+        with open(join(path, ".progress.txt"), "r", encoding="UTF-8") as outputfile:
+            progress = [line.strip() for line in outputfile.readlines()]
+    except Exception as e:
+        print("Unexpected error:", sys.exc_info()[0])
+        messagebox.showerror("error", f"Unexpected error:, {sys.exc_info()[0]}\n{e}")
+        quit_program()
+    return progress
+
+
 i = 0
 go_back = False
 def moveGenerator(failid):
     global i, go_back
-    #i = 0
+    
     while i < len(failid):
-        if go_back:
+        if go_back and i > 2:
             i -= 1
             go_back = False
         else:
@@ -298,9 +407,26 @@ def missing(found_dict:dict):
                 missing_letters.append(str(i)+"D")
         i += 1
         
-    print(f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
+    print(f"Missing numbers: {missing_numbers} \nMissing sides: {missing_letters}")
 
-    messagebox.showerror("Error", f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
+    messagebox.showwarning("Warning", f"Missing numbers: {missing_numbers} \nMissing sides: {missing_letters}")
+    
+log = []
+def quit_program():
+    
+    '''
+    try:
+        print(f"saving log . . .")
+        with open(newpath+"log.log", "+a", encoding="UTF-8") as logfile:
+            logfile.write(f"{datetime.now()}\n")
+            logfile.writelines(log)
+            logfile.write("\n")
+            
+    except Exception as e:
+        print("Unexpected error:", sys.exc_info()[0])
+        messagebox.showerror("error", f"Unexpected error:, {sys.exc_info()[0]}")'''
+    
+    sys.exit()
 
     
     
@@ -309,24 +435,66 @@ if name == "nt":
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
-
+newpath = ""
+different_output = False
 def main():
-    global path
+    global path, newpath, choose
     
     try:
-        path = askdirectory(title='Select Folder') # shows dialog box and return the path
+        path = askdirectory(title='Select Folder of the files to be handled') # shows dialog box and return the path
+        
+        askUserWindow.deiconify()
+        
+        while choose == "":
+            askUserWindow.update()
+            pass
+        choose = ""
 
-        newpath = join(path, "output")
+        # where the output files should go    
+        if different_output:
+            # A window asking the user for output folder name and location asking if 
+            # user wants to do that or accepts the default option folder named: "output"
+            newpath = askdirectory(title='Select Folder for the output files to go to')
+        else:
+            newpath = join(path, "output")
+            
+        print(f"newpath: {newpath}")
+            
+                
         if not exists(newpath):
             mkdir(newpath)
 
+        progress = []
+
+        if ".progress.txt" in listdir(path):
+
+            askUserWindow.deiconify()
+            
+            while choose == "":
+                askUserWindow.update()
+                pass
+
+            ### if user presses Yes if it wants to continue using a saved progress file.
+            if not different_output:
+                progress = read_progress(path)
+
+        print("Joudsin siia")
+
         list_failidest = tee_failideks()
-        print(katse(list_failidest))
-        missing(found)
-        #print(f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
-        #messagebox.showerror("Error", f"puuduolevad numbrid: {missing_numbers} \npuuduolevad sümbolid: {missing_letters}")
-    except RuntimeError as e:
+        
+        print(katse(list_failidest, progress))
+        
+        if len(found) > 0:
+            missing(found)
+            
+        messagebox.showinfo("info", "Program finished!")
+        
+    except Exception as e:
+        messagebox.showerror("error", f"Unexpected error:, {sys.exc_info()[0]}\n{e}")
+
         print(f"error: {e}")
+        
+        quit_program()
     
 if __name__ == "__main__":
     main()
