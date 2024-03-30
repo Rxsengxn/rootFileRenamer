@@ -1,4 +1,4 @@
-# ~~rootNameFinder~~ rootFileRenamer
+# rootFileRenamer
 
 ## How to install:
 
