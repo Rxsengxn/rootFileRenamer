@@ -183,6 +183,7 @@ def viie_katse_parim(frame):
             
         if (key == ord("b")):
             go_back = True
+            root.withdraw()
             break
         
         if correct == True:
@@ -190,6 +191,7 @@ def viie_katse_parim(frame):
         
         if (key == ord("s")):
             skip = True
+            root.withdraw()
             break
     
         try:
