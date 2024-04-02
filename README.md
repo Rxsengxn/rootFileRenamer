@@ -9,7 +9,8 @@ Can be downloaded from this link: [download tesseract](https://digi.bib.uni-mann
 Click next on all of the prompts
 
 ### 3. Download the .exe file from **this repository**
-[rootFileRenamer download](https://github.com/Rxsengxn/rootFileRenamer/blob/kert_development/rootFileRenamer.exe)
+newest version
+[rootFileRenamer download](https://github.com/Rxsengxn/rootFileRenamer/blob/kert_development/rootFileRenamer_v2.exe)
 
   ~~[link to the file in drive](https://drive.google.com/file/d/1Bng2jYmbb5rFycDoCGr7fWBjbaGMldYA/view?usp=sharing)~~
 
