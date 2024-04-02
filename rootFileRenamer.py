@@ -17,24 +17,52 @@ from os.path import isfile, join, exists
 import shutil
 import re
 
-
+# For disabling the askwindow "x" closing function
 def disable_event():
    pass
 
 # Main window
 root = Tk()
+
+root.protocol("WM_DELETE_WINDOW", disable_event)
+
 root.withdraw()
 
 
+
+entryField = Entry(root)
+
+entryField.pack()
+
+def Click(event=None):
+    global correct, mfr
+    mfr = entryField.get().upper()
+    #print(f"input: {mfr}")
+    entryField.delete(0, 'end')
+    if mfr == "": 
+        correct = ""
+    else: 
+        correct = True
+    
+    root.withdraw()
+
+root.bind("<Return>", Click)
+    
+button = Button(root, text="Input correct symbols", command=Click)
+button.pack()
+
+
+
+### Definitions for asking the user for initial setup things
 # Dialog box for asking about the output folder
 askUserWindow = Tk()
 askUserWindow.title("Choose an option")
 # Adjust size
-askUserWindow.geometry("400x150")
+askUserWindow.geometry("400x120")
  
 # set minimum window size value
 askUserWindow.minsize(400, 150)
-
+# Set protocol of closing this window
 askUserWindow.protocol("WM_DELETE_WINDOW", disable_event)
 
 askUserWindow.withdraw()
@@ -48,6 +76,7 @@ labelForText.pack(pady=20)
 askFrame = Frame(askUserWindow)
 askFrame.pack(pady=10)
 
+# Buttons yes an no before the start of the main program
 choose = ""
 def Click_yes(event=None):
     global different_output, choose
@@ -77,30 +106,9 @@ button_no.pack(side="left", padx=(100, 10))
 
 
 
-root.protocol("WM_DELETE_WINDOW", disable_event)
 
-entryField = Entry(root)
 
-entryField.pack()
-
-def Click(event=None):
-    global correct, mfr
-    mfr = entryField.get().upper()
-    #print(f"input: {mfr}")
-    entryField.delete(0, 'end')
-    if mfr == "": 
-        correct = ""
-    else: 
-        correct = True
-    
-    root.withdraw()
-
-root.bind("<Return>", Click)
-    
-button = Button(root, text="Input correct symbols", command=Click)
-button.pack()
-
-def kontroll(symbol):
+def symbol_integrity_check(symbol):
     '''
     Check for symbols and if they are correct.
     Expected: 1-2 numbers and a letter (A-D)
@@ -138,7 +146,7 @@ mfr = ""
 correct = ""
 skip = False
 
-def viie_katse_parim(frame):
+def search_for_symbols(frame):
     global mfr, correct, go_back, skip
     '''
     Searches a set of symbols from the input image.
@@ -149,12 +157,17 @@ def viie_katse_parim(frame):
     
     correct = ""
     
+    # Trained model searching for symbols from thresholded image
     symbols = pytesseract.image_to_string(frame,
                                         lang='eng',
                                         config='--psm 10 --oem 3 -c tessedit_char_whitelist=0123456789ABCD').strip()
-    mfr = kontroll(symbols)
+    
+    # Check symbols integrity
+    mfr = symbol_integrity_check(symbols)
     
     print(f"Result: {mfr}")
+
+    # Show the picture to the user who then verifies the final symbols
 
     cv2.namedWindow('Input', cv2.WINDOW_NORMAL)
     cv2.putText(input_img,
@@ -167,6 +180,7 @@ def viie_katse_parim(frame):
                 cv2.LINE_AA)
     cv2.imshow("Input", input_img)
     
+    # User input for what shoud happen next
     print("(y)es/correct, (n)o/wrong, go (b)ack, (s)kip this picture")
     while True:
         root.update()
@@ -194,13 +208,13 @@ def viie_katse_parim(frame):
             root.withdraw()
             break
     
+        # Check for if the window has been closed, the program should exit
         try:
             if cv2.getWindowProperty('Input', cv2.WND_PROP_VISIBLE) <= 0:
                 quit_program()
         except cv2.error as e:
             messagebox.showerror("error", f"error: {e}")
             quit_program()
-            #sys.exit()
 
     cv2.destroyAllWindows()
     correct = ""
@@ -211,19 +225,32 @@ def viie_katse_parim(frame):
     return mfr
 
 
-def tee_failideks():
+def path_to_files():
+    '''
+    Takes in the path and finds all pictures from this folder and puts them into a list to return.
+    
+    :return: list of pictures from the path given to the program beforehand.
+    '''
     onlyfiles = [f for f in listdir(path) if (isfile(join(path, f)) and (f.endswith('.jpg') or f.endswith('.png')))]
     print(onlyfiles)
     return onlyfiles
 
-def katse(list_failidest, progress:list):
+def main_loop(list_failidest, progress:list):
     global input_img, skip
+    '''
+    Here happens the main loop of the program.
+    
+    :param list_failidest: list of files to be processed
+    :param progress: list of the already progressed pictures previous session. 
+    Read once before the program start from a specified file.
+    '''
 
     cv2.namedWindow('Input', cv2.WINDOW_NORMAL)
     
-        
+    # Handle a picture at a time from the list given with the parameter to this function.
     for juurepilt in moveGenerator(list_failidest):
         if juurepilt.endswith('.jpg') or juurepilt.endswith('.png'):
+            # If using the progress, skip the ones already processed.
             if len(progress) > 0:
                 if juurepilt in progress:
                     progress.remove(juurepilt)
@@ -232,10 +259,14 @@ def katse(list_failidest, progress:list):
             number = None
             file = join(path, juurepilt)
             
+            # Outputting the file currently processing
             print(file)
             input_img = cv2.imread(file)
+            
+            # Cropping the image so we only deal with the part of the picture where the label is located.
             input_img = input_img[int(len(input_img)/10*8):, int(len(input_img[0])/10*7):]
             
+            # Adding some image manipulation for easier detection.
             blurred = cv2.blur(input_img, (13,13))
     
             hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
@@ -268,7 +299,9 @@ def katse(list_failidest, progress:list):
                 input = cv2.dilate(input, np.ones((9,9)), iterations=1)
                 input= cv2.copyMakeBorder(input,10,10,10,10,cv2.BORDER_CONSTANT,value=(0, 0, 255))
 
-                number = viie_katse_parim(input)
+                number = search_for_symbols(input)
+                
+            # If there were no BLUE rectangle detected.
             else:
                 cv2.imshow("Input", input_img)
                 cv2.waitKey(1000)
@@ -276,7 +309,7 @@ def katse(list_failidest, progress:list):
                 print("Couldn't find blue rectangle from this picture.")
                 print(file)
                 print()
-                messagebox.showerror("Error", "Couldn't find blue rectangle from this picture.")
+                messagebox.showerror("Error", "Couldn't find a blue rectangle from this picture.")
                 continue
 
             if go_back or skip:
@@ -290,6 +323,8 @@ def katse(list_failidest, progress:list):
                 messagebox.showerror("Error", "Couldn't find symbols from this picture.")
                 continue
 
+            # Adding the found and presumably correct (determined by the user) symbol 
+            # to already found dict of symbols.
             found_symbols(number)
 
             fileparts = juurepilt.split(".")
@@ -300,16 +335,17 @@ def katse(list_failidest, progress:list):
             new_filename = fileparts2[0] + "_" + str(number).strip() + "." + fileparts[1]
             new_path = join(path,"output",new_filename)
 
-            ### If the file exists already, add X before the name of the file to not 
-            # overwrite the correct file in case of wrong human input
+            # If the file exists already, add X before the name of the file to not 
+            # overwrite the correct file in case of wrong human input.
             if isfile(new_path):
-                #print("EROOROROOROROO")
                 new_path = join(path,"output",("X" + new_filename))
                 #print(f"new_path: {new_path}")
-                messagebox.showerror("Error", "File already exists. Added 'X' to the start of the file name.")
+                messagebox.showwarning("Warning", "File already exists. Added 'X' to the start of the file name.")
 
+            # Copy and rename the file to the output location with a new name.
             shutil.copy(file, new_path)
             
+            ### TODO
             ### Write to a log file
             
             
@@ -319,7 +355,7 @@ def katse(list_failidest, progress:list):
             print(f"failinimi {i}: new_filename: {new_filename} , path: {new_path}")
 
 
-# progress save idea
+# Idea of saving the progress:
 # if first loading up, checks if the directory has a file named ".progress.txt":
 # if no, then its going to continue and its gonna make it.
 # If yes, then it will ask the user if it wants to use it.
@@ -329,8 +365,15 @@ def katse(list_failidest, progress:list):
 # If the user chooses to use the savefile the programm will skip every file that is in
 # the file and continue where the user left off previously.
 
-# The information that it saves: only the original filenames of the pictures, which have been "renamed"/copied.
+# The information that it saves: only the original filenames of the pictures,
+# which have been renamed&copied.
 def write_progress(info, path):
+    '''
+    Write the original name of the processed file to a progress file.
+    
+    :param info: the name of the processed file.
+    :param path: path of the progress file.
+    '''
     try:
         with open(join(path, ".progress.txt"), "a+", encoding="UTF-8") as outputfile:
             outputfile.write(info+"\n")
@@ -340,6 +383,12 @@ def write_progress(info, path):
         quit_program()
         
 def read_progress(path):
+    '''
+    Read from the progress file. Should only get here is the file exists.
+    
+    :param path: path of the progress file.
+    :returns: progress as a list.
+    '''
     try:
         with open(join(path, ".progress.txt"), "r", encoding="UTF-8") as outputfile:
             progress = [line.strip() for line in outputfile.readlines()]
@@ -354,6 +403,12 @@ i = 0
 go_back = False
 def moveGenerator(failid):
     global i, go_back
+    '''
+    A way to move between the files.
+    
+    :param failid: list of to be proccessed files.
+    :yields: a new file to be proccessed based on user input.
+    '''
     
     while i < len(failid):
         if go_back and i > 2:
@@ -365,10 +420,13 @@ def moveGenerator(failid):
         
 found = {}
 def found_symbols(new_symbol):
-    global run
+    '''
+    Adds the found symbol (if its a symbol) to the dict of found symbols.
+    
+    :param new_symbol: the found symbol.
+    '''
     
     if new_symbol == '' or new_symbol == None:
-        run = False
         return
 
     extracted = re.split(r'([0-9]+)([A-Z])', new_symbol)[1:-1]
@@ -391,6 +449,12 @@ missing_letters = []
 
 def missing(found_dict:dict):
     global missing_numbers, missing_letters
+    '''
+    Determines if there are missing sides or "numbers" missing from the files
+    and outputs it to the user as a info message at the end of the program.
+    
+    :param found_dict: a dictionary of the found symbols.
+    '''
     keys = list(found_dict.keys())
     i = 1
     while i <= max(keys):
@@ -415,6 +479,9 @@ def missing(found_dict:dict):
     
 log = []
 def quit_program():
+    '''
+    Exiting when program finishes of error occurs.
+    '''
     
     '''
     try:
@@ -441,8 +508,12 @@ newpath = ""
 different_output = False
 def main():
     global path, newpath, choose
+    '''
+    The MAIN function of the program.
+    '''
     
     try:
+        #
         path = askdirectory(title='Select Folder of the files to be handled') # shows dialog box and return the path
         
         askUserWindow.deiconify()
@@ -482,9 +553,10 @@ def main():
 
         print("Joudsin siia")
 
-        list_failidest = tee_failideks()
+        list_failidest = path_to_files()
         
-        print(katse(list_failidest, progress))
+        # Starting the finding of the symbols.
+        print(main_loop(list_failidest, progress))
         
         if len(found) > 0:
             missing(found)
