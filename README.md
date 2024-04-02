@@ -9,13 +9,17 @@ Can be downloaded from this link: [download tesseract](https://digi.bib.uni-mann
 Click next on all of the prompts
 
 ### 3. Download the .exe file from **this repository**
-newest version
+
+Newest version:
 [rootFileRenamer download](https://github.com/Rxsengxn/rootFileRenamer/blob/kert_development/rootFileRenamer_v2.exe)
 
-  ~~[link to the file in drive](https://drive.google.com/file/d/1Bng2jYmbb5rFycDoCGr7fWBjbaGMldYA/view?usp=sharing)~~
+<!---
+[//]: # (~~[link to the file in drive](https://drive.google.com/file/d/1Bng2jYmbb5rFycDoCGr7fWBjbaGMldYA/view?usp=sharing)~~)
+-->
 
-The file is safe for downloading. (You might have to tell Windows that)
+The file is safe for downloading.
 Source code is available in this repository.
+> **_NOTE:_** You might have to tell Windows that the file is safe and you still want to download/run it.
 
 ### 4. Make sure the pictures are in a separate folder and the path does not include any special characters and spaces
 The program can't currently handle a path with them. (fixing probably in the future)
@@ -28,4 +32,4 @@ Controls should be pretty self explanatory:
 - "y"-(yes), "n"-(no), "b"-(back) or "s"-(skip) while the picture window is focused/active
 - enter the correct symbol combination into the input box field when the program can't find anything or has detected it wrongly
 (can be lowercase, it converts it to uppercase automatically; enter with Enter key :))
-> **_NOTE📝:_**  The program writes "X" at the start of the file if the output folder already has a file with the same name
+> **_NOTE📝:_**  The program writes "X" at the start of the file if the output folder already has a file with the same name.
