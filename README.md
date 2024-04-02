@@ -14,7 +14,7 @@ newest version
 
   ~~[link to the file in drive](https://drive.google.com/file/d/1Bng2jYmbb5rFycDoCGr7fWBjbaGMldYA/view?usp=sharing)~~
 
-The file is safe for downloading.
+The file is safe for downloading. (You might have to tell Windows that)
 Source code is available in this repository.
 
 ### 4. Make sure the pictures are in a separate folder and the path does not include any special characters and spaces
@@ -24,8 +24,8 @@ The program can't currently handle a path with them. (fixing probably in the fut
 
 ### Run the script %%.exe :)
 Controls should be pretty self explanatory:
-- Firstly it asks the user for the folder location where the pictures are located
-- "y" or "n" while the picture window is focused/active
+- On first run it asks the user for the folder location where the pictures are located and the name of the output folder
+- "y"-(yes), "n"-(no), "b"-(back) or "s"-(skip) while the picture window is focused/active
 - enter the correct symbol combination into the input box field when the program can't find anything or has detected it wrongly
-(can be lowercase, it converts it to uppercase; enter with Enter key :))
-> **_NOTE📝:_**  The program overwrites the existing file if it has the same name
+(can be lowercase, it converts it to uppercase automatically; enter with Enter key :))
+> **_NOTE📝:_**  The program writes "X" at the start of the file if the output folder already has a file with the same name
