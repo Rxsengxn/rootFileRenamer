@@ -411,8 +411,9 @@ def moveGenerator(failid):
     '''
     
     while i < len(failid):
-        if go_back and i > 2:
-            i -= 1
+        if go_back:
+            if i >= 2:
+                i -= 1
             go_back = False
         else:
             i += 1
