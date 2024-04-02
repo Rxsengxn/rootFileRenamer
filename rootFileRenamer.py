@@ -452,15 +452,19 @@ def missing(found_dict:dict):
     '''
     Determines if there are missing sides or "numbers" missing from the files
     and outputs it to the user as a info message at the end of the program.
+    If there is more than 5 of the files at the end are missing then assume
+    that user checked incorrectly and the finder exits.
     
     :param found_dict: a dictionary of the found symbols.
     '''
     keys = list(found_dict.keys())
-    i = 1
+    fmtf = 0
+    i = min(keys)
     while i <= max(keys):
         
         if i not in keys:
             missing_numbers.append(i)
+            fmtf += 1
         elif len(found_dict[i]) < 4:
             #print(found_dict[i])
             if "A" not in found_dict[i]:
@@ -471,6 +475,12 @@ def missing(found_dict:dict):
                 missing_letters.append(str(i)+"C")
             if "D" not in found_dict[i]:
                 missing_letters.append(str(i)+"D")
+            fmtf = 0
+        else:
+            fmtf = 0
+        if fmtf > 4:
+            missing_numbers = missing_numbers[:-5] 
+            break
         i += 1
         
     print(f"Missing numbers: {missing_numbers} \nMissing sides: {missing_letters}")
@@ -513,8 +523,12 @@ def main():
     '''
     
     try:
-        #
-        path = askdirectory(title='Select Folder of the files to be handled') # shows dialog box and return the path
+        # Shows the dialog box and returns the path
+        path = askdirectory(title='Select Folder of the files to be handled')
+
+        # If the path is not specified, i.e. the user presses "cancel" in the select folder window
+        if path == ():
+            quit_program()
         
         askUserWindow.deiconify()
         
