@@ -33,3 +33,5 @@ Controls should be pretty self explanatory:
 - enter the correct symbol combination into the input box field when the program can't find anything or has detected it wrongly
 (can be lowercase, it converts it to uppercase automatically; enter with Enter key :))
 > **_NOTE📝:_**  The program writes "X" at the start of the file if the output folder already has a file with the same name.
+
+> Issues, problems and feedback can be sent to kert.karsna@ut.ee
